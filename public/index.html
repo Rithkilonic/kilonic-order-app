@@ -1,29 +1,83 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kilonic Order Form</title>
   <style>
-    body { font-family: Arial; max-width: 500px; margin: auto; padding: 20px; }
-    input, select, button { width: 100%; padding: 8px; margin-top: 5px; }
-    .total { font-weight: bold; margin-top: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    .total {
+      font-weight: bold;
+      margin-top: 15px;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .thank-you {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
+  <div class="logo">
+    <img src="https://example.com/logo.png" alt="Kilonic Logo" style="max-width: 200px;">
+  </div>
+
   <h2>Kilonic Order Form</h2>
   <form id="orderForm">
-    <input type="text" id="name" placeholder="Full Name" required />
-    <input type="text" id="contact" placeholder="Telegram or Phone" required />
-    <input type="email" id="email" placeholder="Email (optional)" />
-    <select id="product">
-      <option value="KILONIC Primefit S/M">KILONIC Primefit S/M ($15.99)</option>
-      <option value="KILONIC Primefit L/XL">KILONIC Primefit L/XL ($15.99)</option>
-    </select>
-    <input type="number" id="quantity" min="1" max="5" value="1" />
-    <input type="text" id="discountCode" placeholder="Discount Code" />
-    <div class="total" id="totalPrice">Total: $15.99</div>
+    <label>Full Name:
+      <input type="text" id="name" required>
+    </label>
+
+    <label>Telegram or Phone:
+      <input type="text" id="contact" required>
+    </label>
+
+    <label>Email (Optional):
+      <input type="email" id="email">
+    </label>
+
+    <label>Product Size:
+      <select id="product">
+        <option value="KILONIC Primefit S/M">KILONIC Primefit S/M ($15.99)</option>
+        <option value="KILONIC Primefit L/XL">KILONIC Primefit L/XL ($15.99)</option>
+      </select>
+    </label>
+
+    <label>Quantity:
+      <input type="number" id="quantity" value="0" min="0" max="5">
+    </label>
+
+    <label>Discount Code:
+      <input type="text" id="discountCode">
+    </label>
+
+    <div class="total" id="totalPrice">Total: $0.00</div>
+
     <button type="submit">Submit Order</button>
   </form>
+
+  <div class="thank-you">Thank you for purchasing from KILONIC!</div>
 
   <script>
     const discountCodes = {
@@ -43,43 +97,52 @@
       const quantity = parseInt(document.getElementById("quantity").value) || 0;
       const code = document.getElementById("discountCode").value.toUpperCase().trim();
       const basePrice = 15.99;
-      const discount = discountCodes[code]?.discount || 0;
+      let discount = 0;
+
+      if (discountCodes[code]) {
+        discount = discountCodes[code].discount;
+      }
+
       const total = quantity * basePrice * (1 - discount);
       totalPriceDiv.textContent = `Total: $${total.toFixed(2)}`;
     };
 
-    form.addEventListener("input", calculateTotal);
+    document.getElementById("quantity").addEventListener("input", calculateTotal);
+    document.getElementById("discountCode").addEventListener("input", calculateTotal);
+    document.getElementById("product").addEventListener("change", calculateTotal);
 
-    form.addEventListener("submit", async function (e) {
+    form.addEventListener("submit", function(e) {
       e.preventDefault();
-      const quantity = parseInt(document.getElementById("quantity").value);
-      if (quantity === 0) return alert("Please select at least 1 item.");
 
+      const quantity = parseInt(document.getElementById("quantity").value);
+      if (quantity === 0) {
+        alert("Please select at least 1 item.");
+        return;
+      }
+
+      const name = document.getElementById("name").value;
+      const contact = document.getElementById("contact").value;
+      const emailInput = document.getElementById("email").value;
+      const product = document.getElementById("product").value;
       const code = document.getElementById("discountCode").value.toUpperCase().trim();
-      const influencer = discountCodes[code]?.influencer || "NONE";
       const total = totalPriceDiv.textContent.replace("Total: $", "");
 
-      const order = {
-        name: document.getElementById("name").value,
-        contact: document.getElementById("contact").value,
-        email: document.getElementById("email").value,
-        product: document.getElementById("product").value,
+      const influencer = discountCodes[code] ? discountCodes[code].influencer : "NONE";
+
+      console.log("Order Submitted:", {
+        name,
+        contact,
+        email: emailInput,
+        product,
         quantity,
         code,
         influencer,
         total
-      };
-
-      const response = await fetch("/submit-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(order)
       });
 
-      const result = await response.json();
-      alert(result.message);
-      form.reset();
-      calculateTotal();
+      const googleFormURL = "https://docs.google.com/forms/d/e/YOUR_GOOGLE_FORM_ID/viewform";
+      const redirectURL = `${googleFormURL}?usp=pp_url&entry.123456=${encodeURIComponent(name)}&entry.234567=${encodeURIComponent(contact)}&entry.345678=${encodeURIComponent(product)}&entry.456789=${quantity}&entry.567890=${code}&entry.678901=$${total}&entry.789012=${encodeURIComponent(emailInput)}&entry.890123=${influencer}`;
+      window.open(redirectURL, "_blank");
     });
   </script>
 </body>
