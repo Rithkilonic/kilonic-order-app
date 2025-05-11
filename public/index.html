@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kilonic Order Form</title>
+  <style>
+    body { font-family: Arial; max-width: 500px; margin: auto; padding: 20px; }
+    input, select, button { width: 100%; padding: 8px; margin-top: 5px; }
+    .total { font-weight: bold; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Kilonic Order Form</h2>
+  <form id="orderForm">
+    <input type="text" id="name" placeholder="Full Name" required />
+    <input type="text" id="contact" placeholder="Telegram or Phone" required />
+    <input type="email" id="email" placeholder="Email (optional)" />
+    <select id="product">
+      <option value="KILONIC Primefit S/M">KILONIC Primefit S/M ($15.99)</option>
+      <option value="KILONIC Primefit L/XL">KILONIC Primefit L/XL ($15.99)</option>
+    </select>
+    <input type="number" id="quantity" min="1" max="5" value="1" />
+    <input type="text" id="discountCode" placeholder="Discount Code" />
+    <div class="total" id="totalPrice">Total: $15.99</div>
+    <button type="submit">Submit Order</button>
+  </form>
+
+  <script>
+    const discountCodes = {
+      "NHAHOK10": { discount: 0.10, influencer: "NHAHOK" },
+      "HENG10": { discount: 0.10, influencer: "HENG" },
+      "GYMLOVER10": { discount: 0.10, influencer: "GYMLOVER" },
+      "PHEAK10": { discount: 0.10, influencer: "PHEAK" },
+      "VANTHO10": { discount: 0.10, influencer: "VANTHO" },
+      "HOURFITNESS10": { discount: 0.10, influencer: "HOURFITNESS" },
+      "KILONIC10": { discount: 0.10, influencer: "KILONIC" }
+    };
+
+    const form = document.getElementById("orderForm");
+    const totalPriceDiv = document.getElementById("totalPrice");
+
+    const calculateTotal = () => {
+      const quantity = parseInt(document.getElementById("quantity").value) || 0;
+      const code = document.getElementById("discountCode").value.toUpperCase().trim();
+      const basePrice = 15.99;
+      const discount = discountCodes[code]?.discount || 0;
+      const total = quantity * basePrice * (1 - discount);
+      totalPriceDiv.textContent = `Total: $${total.toFixed(2)}`;
+    };
+
+    form.addEventListener("input", calculateTotal);
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const quantity = parseInt(document.getElementById("quantity").value);
+      if (quantity === 0) return alert("Please select at least 1 item.");
+
+      const code = document.getElementById("discountCode").value.toUpperCase().trim();
+      const influencer = discountCodes[code]?.influencer || "NONE";
+      const total = totalPriceDiv.textContent.replace("Total: $", "");
+
+      const order = {
+        name: document.getElementById("name").value,
+        contact: document.getElementById("contact").value,
+        email: document.getElementById("email").value,
+        product: document.getElementById("product").value,
+        quantity,
+        code,
+        influencer,
+        total
+      };
+
+      const response = await fetch("/submit-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(order)
+      });
+
+      const result = await response.json();
+      alert(result.message);
+      form.reset();
+      calculateTotal();
+    });
+  </script>
+</body>
+</html>
